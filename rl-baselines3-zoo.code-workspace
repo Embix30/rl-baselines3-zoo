@@ -1,0 +1,216 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Python: Train Q-Learning",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/train.py",
+				"args": [
+					"--algo",
+					"q_learning",
+					"--env",
+					"FrozenLake-v1",
+					"--hyperparams",
+					"n_timesteps:30000",
+					"--env-kwargs",
+					"is_slippery:False",
+					"--eval-freq",
+					"50",
+					"--eval-episodes",
+					"1"										
+				],
+				"console": "integratedTerminal",
+				"justMyCode": false
+			},
+			{
+				"name": "Enjoy Q-Learning on FrozenLake-v1",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/enjoy.py",
+				"args": [
+					"--algo",
+					"q_learning",
+					"--env",
+					"FrozenLake-v1",
+					"-f",
+					"logs/",
+					"--exp-id",
+					"0",
+					"--env-kwargs",
+					"is_slippery:False"					
+				],
+				"justMyCode": false
+			},
+			{
+				"name": "Enjoy DQN on FrozenLake-v1",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/enjoy.py",
+				"args": [
+					"--algo",
+					"dqn",
+					"--env",
+					"FrozenLake-v1",
+					"-f",
+					"logs/",
+					"--exp-id",
+					"0",
+					"--deterministic",
+					"--env-kwargs",
+					"is_slippery:False"
+				],
+				"justMyCode": false
+			},
+			{
+				"name": "Python: Train DQN",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/train.py",
+				"args": [
+					"--algo",
+					"dqn",
+					"--env",
+					"FrozenLake-v1",
+					"--hyperparams",
+					"n_timesteps:30000",
+					"--env-kwargs",
+					"is_slippery:False",
+					"--eval-freq",
+					"100",
+					"--eval-episodes",
+					"1"									
+				],
+				"console": "integratedTerminal",
+				"justMyCode": false
+			},
+			{
+				"name": "Python: Train Q-Learning MaxBias",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/train.py",
+				"args": [
+					"--algo",
+					"q_learning",
+					"--env",
+					"ConstructedMaxBias",
+					"--env-kwargs",
+					"number_arms:5",
+					"--eval-freq", "50",
+					"--eval-episodes", "5",
+					"--hyperparams", "to_mask:True",
+					"-f","logs_train"							
+				],
+				"console": "integratedTerminal",
+				"justMyCode": false
+			},
+			{
+				"name": "Python: Train Double Q-Learning MaxBias",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/train.py",
+				"args": [
+					"--algo",
+					"double_q_learning",
+					"--env",
+					"ConstructedMaxBias",
+					"--env-kwargs",
+					"number_arms:5",
+					"--eval-freq", "50",
+					"--eval-episodes", "5",
+					"--hyperparams", "to_mask:True",
+					"-f","logs_train"													
+				],
+				"console": "integratedTerminal",
+				"justMyCode": false
+			},
+			{
+				"name": "Enjoy on MaxBias",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/enjoy.py",
+				"args": [
+					"--algo",
+					"q_learning",
+					"--env",
+					"ConstructedMaxBias",
+					"-f",
+					"logs_train/",
+					"--exp-id",
+					"0",		
+				],
+				"justMyCode": false
+			},
+			{
+				"name": "Plot DQN Results",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/scripts/plot_from_file.py",
+				"args": [
+				  "-i", "logs/dqn_results.pkl",
+				  "-latex",
+				  "-l", "DQN"
+				]
+			  },
+			  {
+				"name": "Plot Training",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/scripts/plot_train.py",
+				"args": [
+				  "-a", "q_learning",
+				  "-e", "ConstructedMaxBias",
+				  "-f", "logs/",
+				  "-y", "length",
+				  "-w", "9006",
+				  "-x", "steps"
+				]
+			  },
+			  {
+				"name": "All Plots DQN",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/scripts/all_plots.py",
+				"args": [
+				  "-a", "dqn",
+				  "-e", "FrozenLake-v1",
+				  "-f", "logs/",
+				  "-o", "logs/dqn_results"
+				]
+			  },
+			  {
+				"name": "All Plots Q-Learning",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/scripts/all_plots.py",
+				"args": [
+				  "-a", "q_learning",
+				  "-e", "FrozenLake-v1",
+				  "-f", "logs/",
+				  "-o", "logs/q_learning_results"
+				]
+			  },
+			  {
+				"name": "All Plots Q-Learning MaxBias",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/scripts/all_plots.py",
+				"args": [
+				  "-a", "q_learning",
+				  "-e", "ConstructedMaxBias",
+				  "-f", "logs/",
+				  "-o", "logs/q_learning_results_maxbias",
+				  "-k","ep_lengths",
+				  "--no-million"
+				]
+			  }
+		]
+	}
+}

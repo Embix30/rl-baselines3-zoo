@@ -8,6 +8,8 @@ cluster_sbatch.sh
 cluster_sbatch_mpi.sh
 cluster_torchy.sh
 logs/
+logs_train/
+monitor_tensorboard/
 rl-trained_agents/
 .pytype/
 htmlcov/
@@ -22,6 +24,9 @@ _build/
 
 tests/dummy_env/build/
 
+env/
+
+.DS_Store
 
 # Setuptools distribution and build folders.
 /dist/

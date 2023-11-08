@@ -1,0 +1,17 @@
+FrozenLake-v1:
+  n_timesteps: 30000
+  learning_rate: 0.1
+  gamma: 0.99
+  exploration_fraction: 0.3
+  exploration_final_eps: 0.07
+  learning_starts: 0
+
+ConstructedMaxBias:
+  n_timesteps: 1000
+  learning_rate: 0.1
+  gamma: 0.99
+  exploration_fraction: 0.2
+  exploration_initial_eps: 0.1
+  exploration_final_eps: 0.1
+  learning_starts: 0
+  to_mask: True

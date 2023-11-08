@@ -2,6 +2,7 @@ from typing import Callable, Optional
 
 import gymnasium as gym
 from gymnasium.envs.registration import register
+from rl_zoo3.custom_envs.maxbias import ConstructedMaxBias
 
 from rl_zoo3.wrappers import MaskVelocityWrapper
 
@@ -62,3 +63,6 @@ for env_id in MaskVelocityWrapper.velocity_indices.keys():
         id=f"{name}NoVel-v{version}",
         entry_point=create_no_vel_env(env_id),  # type: ignore[arg-type]
     )
+
+register(id='ConstructedMaxBias',
+         entry_point=ConstructedMaxBias)
