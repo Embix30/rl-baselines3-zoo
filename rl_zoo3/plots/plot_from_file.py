@@ -192,8 +192,8 @@ def plot_from_file():  # noqa: C901
                 warnings.warn(f"{env} not found for normalizing scores, you should update `env_key_to_env_id`")
 
         # Truncate to convert to matrix
-        min_runs = min(len(algo_score) for algo_score in algo_scores)
-        if min_runs > 0:
+        # min_runs = min(len(algo_score) for algo_score in algo_scores)
+        if False: #min_runs > 0:
             algo_scores = [algo_score[:min_runs] for algo_score in algo_scores]
             # shape: (n_envs, n_runs) -> (n_runs, n_envs)
             normalized_score_dict[labels[key]] = np.array(algo_scores).T

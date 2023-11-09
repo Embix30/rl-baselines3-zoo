@@ -24,8 +24,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecEnv,
 from torch import nn as nn
 
 # custom algos
-from rl_zoo3.custom_algos.q_learning import QLearning
-from rl_zoo3.custom_algos.double_q_learning import DoubleQLearning
+from rl_zoo3.custom_algos import QLearning, DoubleQLearning, TruncatedDoubleQ
 
 ALGOS: Dict[str, Type[BaseAlgorithm]] = {
     "a2c": A2C,
@@ -42,7 +41,8 @@ ALGOS: Dict[str, Type[BaseAlgorithm]] = {
     "ppo_lstm": RecurrentPPO,
     # custom algorithms
     "q_learning": QLearning,
-    "double_q_learning": DoubleQLearning
+    "double_q_learning": DoubleQLearning,
+    "truncated_double_q": TruncatedDoubleQ
 }
 
 

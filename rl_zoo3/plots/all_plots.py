@@ -173,7 +173,7 @@ def all_plots():  # noqa: C901
                     std_error = std_ / np.sqrt(n_trials)
                     # Take last evaluation
                     # shape: (n_trials, n_eval_episodes) to (n_trials,)
-                    last_evals = np.array(last_eval).squeeze().mean(axis=-1)
+                    last_evals =np.array(last_eval).mean(axis=1) # np.array(last_eval).squeeze().mean(axis=-1)
                     # Standard deviation of the mean performance for the last eval
                     std_last_eval = np.std(last_evals)
                     # Compute standard error
@@ -184,7 +184,7 @@ def all_plots():  # noqa: C901
                     else:
                         results[env][
                             f"{algo}-{args.labels[folder_idx]}"
-                        ] = f"{np.mean(last_evals):.0f} +/- {std_error_last_eval:.0f}"
+                        ] = f"{np.mean(last_evals):.3f} +/- {std_error_last_eval:.3f}"
 
                     # x axis in Millions of timesteps
                     divider = 1e6

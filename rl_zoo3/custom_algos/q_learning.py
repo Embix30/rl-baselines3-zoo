@@ -7,9 +7,10 @@ from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import get_linear_fn
-from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.utils import safe_mean
 from typing import Optional, Union
+
+from collections import Counter
 
 import torch as th
 import torch.nn as nn
@@ -38,9 +39,11 @@ class QLearning(BaseAlgorithm):
         self,
         env: GymEnv,
         learning_rate: Union[float, Schedule] = 1e-4,
-        learning_starts: int = 100,
+        robbins_monro: bool = False,
+        sa_counter= None,
+        learning_starts: int = 0,
         gamma: float = 0.99,
-        policy: BasePolicy = None,  # Set a default value of None
+        policy: nn.Module = None,  # Set a default value of None
         exploration_fraction: float = 0.1,
         exploration_initial_eps: float = 1.0,
         exploration_final_eps: float = 0.05,
@@ -51,7 +54,6 @@ class QLearning(BaseAlgorithm):
         support_multi_env: bool = False,
         monitor_wrapper: bool = True,
         seed: Optional[int] = None,
-        # is to_mask is True then multi_env is not supported yet
         to_mask= False,
         action_mask = None,
         _init_setup_model = True,
@@ -78,6 +80,15 @@ class QLearning(BaseAlgorithm):
         self.to_mask = to_mask
         self.action_mask = action_mask
 
+        if to_mask and action_mask is None:
+            self.action_mask = {}
+
+        self.robbins_monro=robbins_monro
+        self.sa_counter = sa_counter
+
+        if robbins_monro and sa_counter is None:
+            self.sa_counter = Counter()
+
         if _init_setup_model:
             self._setup_model()
 
@@ -96,7 +107,7 @@ class QLearning(BaseAlgorithm):
             self.exploration_fraction,
         )
 
-    def predict(self, observation: np.ndarray, deterministic: bool = False, episode_start = False, **kwargs):
+    def predict(self, observation: np.ndarray, deterministic: bool = False, **kwargs):
         """
         Get the model's action from an observation.
 
@@ -132,9 +143,6 @@ class QLearning(BaseAlgorithm):
             progress_bar,
         )
 
-        if self.to_mask and self.action_mask is None:
-            self.action_mask={}
-
         callback.on_training_start(locals(), globals())
 
         callback.on_rollout_start()
@@ -154,6 +162,9 @@ class QLearning(BaseAlgorithm):
 
             new_obs, rewards, dones, infos = self.env.step(actions)
 
+            if self.robbins_monro:
+                self.sa_counter[f"{self._last_obs[0]},{actions[0]}"]+=1
+
             if self.to_mask:
                 if new_obs[0] not in self.action_mask.keys():
                     if dones[0]:
@@ -170,10 +181,11 @@ class QLearning(BaseAlgorithm):
             self._update_info_buffer(infos, dones)
 
             self._update_current_progress_remaining(self.num_timesteps, self._total_timesteps)
-            self._update_learning_rate()
+            
+            lr = self._update_learning_rate(actions)
             
             # Update Q-table
-            self.train(actions, new_obs, rewards, dones)
+            self.train(actions, new_obs, rewards, dones, lr)
 
             self._last_obs = new_obs
 
@@ -195,23 +207,26 @@ class QLearning(BaseAlgorithm):
         
         return self
     
-    def train(self, actions, new_obs, rewards, dones):
+    def train(self, actions, new_obs, rewards, dones, learning_rate):
             if dones[0]:
-                self.policy[self._last_obs, actions] += self.lr_schedule(self._current_progress_remaining) * (
+                self.policy[self._last_obs, actions] += learning_rate * (
                     th.tensor(rewards, dtype=th.float32) - self.policy[self._last_obs, actions]
                 )
 
             else: 
                 max_action = self.select_max_action(self.policy[new_obs],new_obs)
 
-                self.policy[self._last_obs, actions] += self.lr_schedule(self._current_progress_remaining) * (
+                self.policy[self._last_obs, actions] += learning_rate * (
                     th.tensor(rewards, dtype=th.float32) + self.gamma * self.policy[new_obs,max_action] - self.policy[self._last_obs, actions]
                 )
     
     def select_max_action(self, tensor, obs):
         if self.to_mask:
             # Convert the numpy mask to a torch tensor and make it boolean
-            mask_tensor = th.from_numpy(self.action_mask[obs[0]]).bool()
+            try:
+                mask_tensor = th.from_numpy(self.action_mask[obs[0]]).bool()
+            except KeyError: 
+                mask_tensor = th.from_numpy(np.ones_like(list(self.action_mask.values())[0])).bool()
             tensor = th.where(mask_tensor, tensor, th.tensor(-float('inf')))
         max_value = th.max(tensor)
         max_actions = th.nonzero(tensor.flatten() == max_value).flatten()
@@ -276,7 +291,7 @@ class QLearning(BaseAlgorithm):
         self.exploration_rate = self.exploration_schedule(self._current_progress_remaining)
         self.logger.record("rollout/exploration_rate", self.exploration_rate)
 
-    def _update_learning_rate(self) -> None:
+    def _update_learning_rate(self, actions) -> float:
         """
         Update the optimizers learning rate using the current learning rate schedule
         and the current progress remaining (from 1 to 0).
@@ -284,8 +299,16 @@ class QLearning(BaseAlgorithm):
         :param optimizers:
             An optimizer or a list of optimizers.
         """
+
+        if self.robbins_monro:
+            lr = 1/(self.sa_counter[f"{self._last_obs[0]},{actions[0]}"]+1)
+        else:
+            lr = self.lr_schedule(self._current_progress_remaining)
+
         # Log the current learning rate
-        self.logger.record("train/learning_rate", self.lr_schedule(self._current_progress_remaining))
+        self.logger.record("train/learning_rate", lr)
+
+        return lr
 
 
     # def save(self, save_path):

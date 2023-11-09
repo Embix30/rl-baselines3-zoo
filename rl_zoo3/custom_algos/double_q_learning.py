@@ -1,17 +1,12 @@
 import numpy as np
 import sys
 import time
-import warnings
 from copy import deepcopy
-from stable_baselines3.common.base_class import BaseAlgorithm
-from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines3.common.utils import get_linear_fn
-from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.utils import safe_mean
-from typing import Optional, Union
+from typing import Optional, Union, List
 
-from rl_zoo3.custom_algos.q_learning import QLearning, QTableWrapper
+from rl_zoo3.custom_algos import QLearning, QTableWrapper
 
 import torch as th
 import torch.nn as nn
@@ -26,12 +21,12 @@ class DoubleQLearning(QLearning):
         policy_tensorA = th.zeros((self.observation_space.n, self.action_space.n), dtype=th.float32)
         policy_tensorB = th.zeros((self.observation_space.n, self.action_space.n), dtype=th.float32)
 
-        self.policyA = QTableWrapper(policy_tensorA)
-        self.policyB = QTableWrapper(policy_tensorB)
+        policyA = QTableWrapper(policy_tensorA)
+        policyB = QTableWrapper(policy_tensorB)
 
         self.policy = nn.ModuleDict({
-            'policyA': self.policyA,
-            'policyB': self.policyB
+            'A': policyA,
+            'B': policyB
         })
 
         self.exploration_schedule = get_linear_fn(
@@ -40,7 +35,7 @@ class DoubleQLearning(QLearning):
             self.exploration_fraction,
         )
 
-    def predict(self, observation: np.ndarray, deterministic: bool = False, episode_start = False, **kwargs):
+    def predict(self, observation: np.ndarray, deterministic: bool = False, **kwargs):
         """
         Get the model's action from an observation.
 
@@ -56,7 +51,7 @@ class DoubleQLearning(QLearning):
             action_mask = None if not self.to_mask else self.action_mask[observation[0]]
             action = np.array([self.action_space.sample(mask = action_mask) for _ in range(n_batch)])
         else:
-            q_values = th.mean(th.concat([self.policyA[observation],self.policyB[observation]]),dim=0)
+            q_values = th.mean(th.concat([self.policy['A'][observation],self.policy['B'][observation]]),dim=0)
 
             action = self.select_max_action(q_values,observation)
                         
@@ -80,26 +75,26 @@ class DoubleQLearning(QLearning):
             progress_bar=progress_bar,
         )
     
-    def train(self, actions, new_obs, rewards, dones):
+    def train(self, actions, new_obs, rewards, dones, learning_rate):
             # Update Q-tables using the Double Q-learning update rule
             # Randomly choose which Q-table to update
             if np.random.random() < 0.5:
-                primary_policy, secondary_policy = self.policyA, self.policyB
+                primary_policy, secondary_policy = self.policy['A'], self.policy['B']
             else:
-                primary_policy, secondary_policy = self.policyB, self.policyA
+                primary_policy, secondary_policy = self.policy['B'], self.policy['A']
 
             if not dones[0]:
                 
                 # Get the action that maximizes the Q-value in the second Q-table
 
-                max_action_secondary = self.select_max_action(secondary_policy[new_obs],new_obs)
+                max_action_primary = self.select_max_action(primary_policy[new_obs],new_obs)
 
-                target_q_values = th.tensor(rewards, dtype=th.float32) + self.gamma * primary_policy[new_obs,max_action_secondary]
+                target = th.tensor(rewards, dtype=th.float32) + self.gamma * secondary_policy[new_obs,max_action_primary]
 
-                primary_policy[self._last_obs, actions] += self.lr_schedule(self._current_progress_remaining) * (
-                    target_q_values - primary_policy[self._last_obs, actions]
+                primary_policy[self._last_obs, actions] += learning_rate * (
+                    target - primary_policy[self._last_obs, actions]
                 )
             else:
-                primary_policy[self._last_obs, actions] += self.lr_schedule(self._current_progress_remaining) * (
+                primary_policy[self._last_obs, actions] += learning_rate * (
                     th.tensor(rewards, dtype=th.float32) - primary_policy[self._last_obs, actions]
                 )

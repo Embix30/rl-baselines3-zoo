@@ -505,7 +505,8 @@ class ExperimentManager:
             eval_callback = EvalCallback(
                 self.create_envs(self.n_eval_envs, eval_env=True),
                 callback_on_new_best=save_vec_normalize,
-                best_model_save_path=self.save_path,
+                best_model_save_path=None, # self.save_path,
+                verbose=self.verbose, 
                 n_eval_episodes=self.n_eval_episodes,
                 log_path=self.save_path,
                 eval_freq=self.eval_freq,

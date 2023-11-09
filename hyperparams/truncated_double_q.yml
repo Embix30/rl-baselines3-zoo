@@ -16,3 +16,5 @@ ConstructedMaxBias:
   learning_starts: 0
   to_mask: True
   robbins_monro: True
+  C_upper: 30
+  C_lower: 30

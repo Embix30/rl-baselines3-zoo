@@ -102,11 +102,12 @@
 					"--env",
 					"ConstructedMaxBias",
 					"--env-kwargs",
-					"number_arms:5",
-					"--eval-freq", "50",
-					"--eval-episodes", "5",
-					"--hyperparams", "to_mask:True",
-					"-f","logs_train"							
+					"number_arms:50",
+					"--eval-freq", "1",
+					"--eval-episodes", "1",
+					"--hyperparams", "to_mask:True", "robbins_monro:False",
+					"-f","logs_train",
+					"-n","2000"							
 				],
 				"console": "integratedTerminal",
 				"justMyCode": false
@@ -122,11 +123,36 @@
 					"--env",
 					"ConstructedMaxBias",
 					"--env-kwargs",
-					"number_arms:5",
+					"number_arms:50",
+					"mean:-0.1",
+					"variance:1",
+					"distribution:'normal'",
+					"strict_mask:True",
 					"--eval-freq", "50",
 					"--eval-episodes", "5",
 					"--hyperparams", "to_mask:True",
-					"-f","logs_train"													
+					"-f","logs_train",
+					"--verbose","0"													
+				],
+				"console": "integratedTerminal",
+				"justMyCode": false
+			},			{
+				"name": "Python: Train Truncated Double Q MaxBias",
+				"type": "python",
+				"request": "launch",
+				"program": "${workspaceFolder}/train.py",
+				"args": [
+					"--algo",
+					"truncated_double_q",
+					"--env",
+					"ConstructedMaxBias",
+					"--env-kwargs",
+					"number_arms:50",
+					"--eval-freq", "50",
+					"--eval-episodes", "1",
+					"--hyperparams", "to_mask:True",
+					"-f","logs_train",
+					"-n", "2000"													
 				],
 				"console": "integratedTerminal",
 				"justMyCode": false
@@ -138,7 +164,7 @@
 				"program": "${workspaceFolder}/enjoy.py",
 				"args": [
 					"--algo",
-					"q_learning",
+					"double_q_learning",
 					"--env",
 					"ConstructedMaxBias",
 					"-f",
@@ -149,14 +175,15 @@
 				"justMyCode": false
 			},
 			{
-				"name": "Plot DQN Results",
+				"name": "Plot max bias Results",
 				"type": "python",
 				"request": "launch",
 				"program": "${workspaceFolder}/scripts/plot_from_file.py",
 				"args": [
-				  "-i", "logs/dqn_results.pkl",
+				  "-i", "logs_exp/exp1_results.pkl",
 				  "-latex",
-				  "-l", "DQN"
+				  "-l", "Q-Learning","Double Q","Truncated Double Q",
+				  "--no-million"
 				]
 			  },
 			  {
@@ -198,15 +225,15 @@
 				]
 			  },
 			  {
-				"name": "All Plots Q-Learning MaxBias",
+				"name": "All Plots MaxBias",
 				"type": "python",
 				"request": "launch",
 				"program": "${workspaceFolder}/scripts/all_plots.py",
 				"args": [
-				  "-a", "q_learning",
+				  "-a", "q_learning", "double_q_learning", "truncated_double_q", 
 				  "-e", "ConstructedMaxBias",
-				  "-f", "logs/",
-				  "-o", "logs/q_learning_results_maxbias",
+				  "-f", "logs_exp/exp1",
+				  "-o", "logs_exp/exp1_results",
 				  "-k","ep_lengths",
 				  "--no-million"
 				]

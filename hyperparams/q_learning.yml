@@ -15,3 +15,4 @@ ConstructedMaxBias:
   exploration_final_eps: 0.1
   learning_starts: 0
   to_mask: True
+  robbins_monro: True

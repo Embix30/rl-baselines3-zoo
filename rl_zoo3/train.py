@@ -270,7 +270,7 @@ def train() -> None:
         # Normal training
         if model is not None:
             exp_manager.learn(model)
-            exp_manager.save_trained_model(model)
+            # exp_manager.save_trained_model(model)
     else:
         exp_manager.hyperparameters_optimization()
 
